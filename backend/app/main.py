@@ -10,14 +10,13 @@ from .database import SessionLocal, engine, get_db
 
 app = FastAPI(title="Movie Matcher API")
 
-# CORS - только разрешённые домены
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# CORS - разрешаем все источники для разработки
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=["GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 
