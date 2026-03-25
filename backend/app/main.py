@@ -95,11 +95,9 @@ def get_active_users(db: Session = Depends(get_db)):
 
 
 @app.delete("/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def delete_user(user_id: int, db: Session = Depends(get_db)):
     """Удалить пользователя и все его данные (завершить сессию)."""
-    # Разрешить только админу или самому пользователю
-    if current_user.id != user_id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    # Разрешаем удалять любую сессию (для экрана логина)
     crud.delete_user(db, user_id)
     return {"message": "User deleted"}
 

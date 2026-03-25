@@ -65,6 +65,7 @@ export const getActiveUsers = async () => {
 };
 
 export const deleteUser = async (userId) => {
+  // DELETE без токена - для экрана логина
   const response = await api.delete(`/users/${userId}`);
   return response.data;
 };
