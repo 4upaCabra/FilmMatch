@@ -8,8 +8,6 @@ import os
 from . import models, schemas, crud, auth
 from .database import SessionLocal, engine, get_db
 
-models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title="Movie Matcher API")
 
 # CORS - только разрешённые домены
