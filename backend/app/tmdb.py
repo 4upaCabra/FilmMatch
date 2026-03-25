@@ -19,7 +19,7 @@ async def _fetch_from_tmdb(endpoint: str, params: dict) -> list:
     proxy = os.getenv("TMDB_PROXY_URL")
 
     try:
-        async with httpx.AsyncClient(proxies=proxy) if proxy else httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(proxy=proxy) if proxy else httpx.AsyncClient() as client:
             response = await client.get(url, params=params, headers=headers, timeout=10.0)
             response.raise_for_status()
             return response.json()
