@@ -8,7 +8,6 @@ const POPULAR_GENRES = [
 ];
 
 export default function SwipeScreen({ user }) {
-  const userId = user.id;
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [excludeWatched, setExcludeWatched] = useState(false);
@@ -27,7 +26,7 @@ export default function SwipeScreen({ user }) {
     setLoading(true);
     setError('');
     try {
-      const nextMovie = await getNextMovie(userId, excludeWatched, maxAge, genre);
+      const nextMovie = await getNextMovie(excludeWatched, maxAge, genre);
       setMovie(nextMovie);
     } catch (err) {
       if (err.response?.status === 404) {
@@ -40,7 +39,7 @@ export default function SwipeScreen({ user }) {
     } finally {
       setLoading(false);
     }
-  }, [userId, excludeWatched, maxAge, genre]);
+  }, [excludeWatched, maxAge, genre]);
 
   useEffect(() => {
     fetchMovie();
@@ -72,7 +71,7 @@ export default function SwipeScreen({ user }) {
     setMovie(null);
 
     try {
-      const res = await swipeMovie(userId, currentMovieId, isLiked);
+      const res = await swipeMovie(currentMovieId, isLiked);
 
       if (res.is_match) {
         setMatchMovie(res.movie);

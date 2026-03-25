@@ -16,10 +16,10 @@ async def _fetch_from_tmdb(endpoint: str, params: dict) -> list:
         params["api_key"] = TMDB_API_KEY
 
     url = f"{TMDB_BASE_URL}{endpoint}"
-    proxy = "http://192.168.2.123:3128"
+    proxy = os.getenv("TMDB_PROXY_URL")
 
     try:
-        async with httpx.AsyncClient(verify=False, proxies=proxy) as client:
+        async with httpx.AsyncClient(proxies=proxy) if proxy else httpx.AsyncClient() as client:
             response = await client.get(url, params=params, headers=headers, timeout=10.0)
             response.raise_for_status()
             return response.json()

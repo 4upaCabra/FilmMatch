@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { loginUser, getActiveUsers, clearUserSwipes } from '../api/client';
+import { loginUser, getActiveUsers } from '../api/client';
 
 export default function LoginScreen({ onLogin }) {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeSessions, setActiveSessions] = useState([]);
+  const [activeUsers, setActiveUsers] = useState([]);
 
-  const fetchActiveSessions = async () => {
+  const fetchActiveUsers = async () => {
     try {
-      const sessions = await getActiveUsers();
-      setActiveSessions(sessions);
+      const users = await getActiveUsers();
+      setActiveUsers(users);
     } catch (err) {
-      console.error('Failed to fetch active sessions', err);
+      console.error('Failed to fetch active users', err);
     }
   };
 
   useEffect(() => {
-    fetchActiveSessions();
+    fetchActiveUsers();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -27,23 +27,13 @@ export default function LoginScreen({ onLogin }) {
     setLoading(true);
     setError('');
     try {
-      const user = await loginUser(username.trim());
-      onLogin(user);
+      const tokenData = await loginUser(username.trim());
+      localStorage.setItem('token', tokenData.access_token);
+      onLogin({ username: username.trim(), id: tokenData.user_id });
     } catch (err) {
       setError('Не удалось войти. Попробуйте другое имя.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const terminateSession = async (user) => {
-    if (!window.confirm(`Завершить сеанс пользователя ${user.username} (очистить его свайпы)?`)) return;
-    
-    try {
-      await clearUserSwipes(user.id);
-      fetchActiveSessions();
-    } catch (err) {
-      console.error('Failed to terminate session', err);
     }
   };
 
@@ -54,7 +44,7 @@ export default function LoginScreen({ onLogin }) {
           TinderFilm
         </h1>
         <p className="text-gray-400 mb-8 font-medium">Кто сегодня выбирает кино?</p>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <input
             type="text"
@@ -64,9 +54,9 @@ export default function LoginScreen({ onLogin }) {
             className="w-full bg-gray-900 border border-gray-700 rounded-2xl py-4 px-6 text-white text-lg focus:outline-none focus:border-purple-500 transition-colors"
             required
           />
-          
+
           {error && <p className="text-red-400 text-sm">{error}</p>}
-          
+
           <button
             type="submit"
             disabled={loading || !username.trim()}
@@ -77,29 +67,18 @@ export default function LoginScreen({ onLogin }) {
         </form>
       </div>
 
-      {activeSessions.length > 0 && (
+      {activeUsers.length > 0 && (
         <div className="max-w-sm w-full">
           <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-4 px-2">
-            Активные сеансы
+            Пользователи
           </h3>
           <div className="space-y-2">
-            {activeSessions.map(u => (
-              <div key={u.id} className="group flex items-center justify-between bg-gray-800/50 border border-gray-700 p-4 rounded-2xl hover:bg-gray-800 transition-all">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                    {u.username[0].toUpperCase()}
-                  </div>
-                  <span className="text-gray-200 font-medium">{u.username}</span>
+            {activeUsers.map(u => (
+              <div key={u.id} className="flex items-center space-x-3 bg-gray-800/50 border border-gray-700 p-4 rounded-2xl">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                  {u.username[0].toUpperCase()}
                 </div>
-                <button 
-                  onClick={() => terminateSession(u)}
-                  className="p-2 text-gray-500 hover:text-red-500 transition-colors transform group-hover:scale-110"
-                  title="Завершить сеанс"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
+                <span className="text-gray-200 font-medium">{u.username}</span>
               </div>
             ))}
           </div>

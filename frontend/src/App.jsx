@@ -8,7 +8,8 @@ function App() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem('movie_matcher_user');
-    if (savedUser) {
+    const token = localStorage.getItem('token');
+    if (savedUser && token) {
       setUser(JSON.parse(savedUser));
     }
   }, []);
@@ -21,6 +22,7 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('movie_matcher_user');
+    localStorage.removeItem('token');
   };
 
   if (!user) {

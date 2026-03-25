@@ -15,6 +15,9 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+class UserLogin(BaseModel):
+    username: str
+
 class MovieBase(BaseModel):
     title: str
     year: Optional[int] = None
@@ -22,7 +25,6 @@ class MovieBase(BaseModel):
     tags: Optional[List[str]] = None
     rating: Optional[float] = None
     poster_url: Optional[str] = None
-    kp_id: Optional[int] = None
     description: Optional[str] = None
 
 class MovieCreate(MovieBase):
@@ -35,7 +37,6 @@ class MovieResponse(MovieBase):
         from_attributes = True
 
 class SwipeCreate(BaseModel):
-    user_id: int
     movie_id: int
     is_liked: bool
 

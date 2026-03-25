@@ -1,18 +1,31 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: `http://${typeof window !== 'undefined' ? window.location.hostname : '192.168.2.146'}:8001`,
+  baseURL: `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8001`,
 });
 
-export const loginUser = async (username) => {
-  const response = await api.post('/users', { username });
+// Добавляем токен к запросам
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const registerUser = async (username) => {
+  const response = await api.post('/register', { username });
   return response.data;
 };
 
-export const getNextMovie = async (userId, excludeWatched, maxAge, genre) => {
+export const loginUser = async (username) => {
+  const response = await api.post('/login', { username });
+  return response.data;
+};
+
+export const getNextMovie = async (excludeWatched, maxAge, genre) => {
   const response = await api.get('/movies/next', {
-    params: { 
-      user_id: userId, 
+    params: {
       exclude_watched: excludeWatched,
       max_age: maxAge,
       genre: genre
@@ -24,17 +37,16 @@ export const getNextMovie = async (userId, excludeWatched, maxAge, genre) => {
   return response.data;
 };
 
-export const swipeMovie = async (userId, movieId, isLiked) => {
+export const swipeMovie = async (movieId, isLiked) => {
   const response = await api.post('/swipe', {
-    user_id: userId,
     movie_id: movieId,
     is_liked: isLiked
   });
   return response.data;
 };
 
-export const clearUserSwipes = async (userId) => {
-  const response = await api.delete(`/users/${userId}/swipes`);
+export const clearUserSwipes = async () => {
+  const response = await api.delete('/users/me/swipes');
   return response.data;
 };
 

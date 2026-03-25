@@ -6,9 +6,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: YOUR_DB_PASSWORD
-      POSTGRES_DB: movie_matcher
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init:/docker-entrypoint-initdb.d
@@ -20,9 +20,11 @@ services:
     ports:
       - "8001:8001"
     environment:
-      DATABASE_URL: postgresql://user:YOUR_DB_PASSWORD@db:5432/movie_matcher
-      TMDB_API_KEY: "YOUR_TMDB_API_KEY"
-      TMDB_BEARER_TOKEN: "YOUR_TMDB_BEARER_TOKEN"
+      DATABASE_URL: ${DATABASE_URL}
+      TMDB_API_KEY: ${TMDB_API_KEY}
+      TMDB_BEARER_TOKEN: ${TMDB_BEARER_TOKEN}
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
     depends_on:
       - db
     volumes:
