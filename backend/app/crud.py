@@ -27,23 +27,23 @@ def get_or_create_user(db: Session, username: str):
         "has_history": has_history
     }
 
-def create_swipe(db: Session, swipe: schemas.SwipeCreate):
+def create_swipe(db: Session, swipe_data: dict):
     # Check if this user already swiped this movie
     db_swipe = db.query(models.Swipe).filter(
-        models.Swipe.user_id == swipe.user_id,
-        models.Swipe.movie_id == swipe.movie_id
+        models.Swipe.user_id == swipe_data["user_id"],
+        models.Swipe.movie_id == swipe_data["movie_id"]
     ).first()
-    
+
     if db_swipe:
-        db_swipe.is_liked = swipe.is_liked
+        db_swipe.is_liked = swipe_data["is_liked"]
         db_swipe.created_at = datetime.utcnow()
     else:
-        db_swipe = models.Swipe(**swipe.model_dump())
+        db_swipe = models.Swipe(**swipe_data)
         db.add(db_swipe)
-    
+
     db.commit()
     db.refresh(db_swipe)
-    
+
     # Check for match IF user liked the movie
     is_match = False
     movie = None
@@ -54,15 +54,21 @@ def create_swipe(db: Session, swipe: schemas.SwipeCreate):
             models.Swipe.user_id != db_swipe.user_id,
             models.Swipe.is_liked == True
         ).first()
-        
+
         if other_like:
             is_match = True
             movie = db.query(models.Movie).filter(models.Movie.id == db_swipe.movie_id).first()
-            
-    db_swipe.is_match = is_match
-    db_swipe.movie = movie
-    
-    return db_swipe
+
+    # Return dict with match info
+    return {
+        "id": db_swipe.id,
+        "user_id": db_swipe.user_id,
+        "movie_id": db_swipe.movie_id,
+        "is_liked": db_swipe.is_liked,
+        "created_at": db_swipe.created_at,
+        "is_match": is_match,
+        "movie": movie
+    }
 
 async def populate_discover_movies(db: Session, page: int = 1):
     """Fetch movies from multiple TMDB sources and add to DB."""
@@ -191,10 +197,8 @@ def clear_user_swipes(db: Session, user_id: int):
     db.commit()
 
 def get_active_users(db: Session):
-    # Users who have at least one swipe
-    user_ids = db.query(models.Swipe.user_id).distinct().all()
-    user_ids = [uid[0] for uid in user_ids]
-    return db.query(models.User).filter(models.User.id.in_(user_ids)).all()
+    # Возвращаем всех пользователей (активные сессии)
+    return db.query(models.User).all()
 
 
 def delete_user(db: Session, user_id: int):

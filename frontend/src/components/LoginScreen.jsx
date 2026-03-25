@@ -11,6 +11,7 @@ export default function LoginScreen({ onLogin }) {
   const fetchActiveUsers = async () => {
     try {
       const users = await getActiveUsers();
+      console.log('Active users loaded:', users);
       setActiveUsers(users);
     } catch (err) {
       console.error('Failed to fetch active users', err);
@@ -18,6 +19,7 @@ export default function LoginScreen({ onLogin }) {
   };
 
   useEffect(() => {
+    console.log('LoginScreen mounted, fetching active users');
     fetchActiveUsers();
     // Фокус на поле ввода при загрузке
     if (inputRef.current) {

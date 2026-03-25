@@ -114,6 +114,6 @@ def clear_my_swipes(db: Session = Depends(get_db), current_user: models.User = D
 @app.post("/swipe", response_model=schemas.SwipeResponse)
 def create_swipe(swipe: schemas.SwipeCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Создать свайп от имени текущего пользователя."""
-    # Принудительно устанавливаем user_id из токена
-    swipe_data = schemas.SwipeCreate(user_id=current_user.id, movie_id=swipe.movie_id, is_liked=swipe.is_liked)
-    return crud.create_swipe(db, swipe=swipe_data)
+    # Создаем свайп с user_id из токена
+    swipe_data = {"user_id": current_user.id, "movie_id": swipe.movie_id, "is_liked": swipe.is_liked}
+    return crud.create_swipe(db, swipe_data=swipe_data)
