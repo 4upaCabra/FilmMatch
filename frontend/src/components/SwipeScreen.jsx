@@ -72,8 +72,10 @@ export default function SwipeScreen({ user }) {
 
     try {
       const res = await swipeMovie(currentMovieId, isLiked);
+      console.log('Swipe response:', res);
 
       if (res.is_match) {
+        console.log('MATCH! Movie:', res.movie);
         setMatchMovie(res.movie);
       } else {
         fetchMovie();

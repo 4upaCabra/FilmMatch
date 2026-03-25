@@ -131,7 +131,7 @@ async def populate_discover_movies(db: Session, page: int = 1):
 async def get_next_movie(db: Session, user_id: int, exclude_watched: bool = False, min_year: Optional[int] = None, genre: Optional[str] = None) -> Optional[models.Movie]:
     query = db.query(models.Movie)
 
-    # Всегда исключаем фильмы, которые пользователь уже свайпнул
+    # Исключаем фильмы которые пользователь уже свайпнул
     swiped_subquery = db.query(models.Swipe.movie_id).filter(models.Swipe.user_id == user_id)
     query = query.filter(~models.Movie.id.in_(swiped_subquery))
 
@@ -157,8 +157,9 @@ async def get_next_movie(db: Session, user_id: int, exclude_watched: bool = Fals
             genre_filters = [models.Movie.genres.any(g) for g in genres_list]
             query = query.filter(or_(*genre_filters))
 
-    # Получаем текущий фильм
-    movie = query.order_by(func.random()).first()
+    # Получаем текущий фильм - последовательно по ID (не случайно!)
+    # Это нужно для корректной работы матчей - все пользователи видят одни фильмы
+    movie = query.order_by(models.Movie.id).first()
 
     # Предзагрузка: если фильмов в пуле мало (< 20), запускаем загрузку новых
     # но не блокируем возврат текущего фильма
