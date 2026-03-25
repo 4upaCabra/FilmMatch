@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8001`,
+  baseURL: '/api',
 });
 
 // Добавляем токен к запросам
