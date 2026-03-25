@@ -195,3 +195,14 @@ def get_active_users(db: Session):
     user_ids = db.query(models.Swipe.user_id).distinct().all()
     user_ids = [uid[0] for uid in user_ids]
     return db.query(models.User).filter(models.User.id.in_(user_ids)).all()
+
+
+def delete_user(db: Session, user_id: int):
+    """Удалить пользователя и все его данные (свайпы, историю)."""
+    # Удаляем свайпы
+    db.query(models.Swipe).filter(models.Swipe.user_id == user_id).delete()
+    # Удаляем историю просмотров
+    db.query(models.WatchHistory).filter(models.WatchHistory.user_id == user_id).delete()
+    # Удаляем пользователя
+    db.query(models.User).filter(models.User.id == user_id).delete()
+    db.commit()

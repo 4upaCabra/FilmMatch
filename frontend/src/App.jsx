@@ -5,6 +5,7 @@ import { loginUser } from './api/client';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [sessionKey, setSessionKey] = useState(0);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('movie_matcher_user');
@@ -23,10 +24,17 @@ function App() {
     setUser(null);
     localStorage.removeItem('movie_matcher_user');
     localStorage.removeItem('token');
+    setSessionKey(prev => prev + 1); // Обновить список сессий
   };
 
   if (!user) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return (
+      <LoginScreen
+        key={sessionKey}
+        onLogin={handleLogin}
+        onSessionChange={() => setSessionKey(prev => prev + 1)}
+      />
+    );
   }
 
   return (

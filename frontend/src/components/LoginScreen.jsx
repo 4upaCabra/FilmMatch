@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { loginUser, getActiveUsers } from '../api/client';
+import { loginUser, getActiveUsers, deleteUser } from '../api/client';
 
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ onLogin, onSessionChange }) {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -11,6 +11,7 @@ export default function LoginScreen({ onLogin }) {
     try {
       const users = await getActiveUsers();
       setActiveUsers(users);
+      if (onSessionChange) onSessionChange();
     } catch (err) {
       console.error('Failed to fetch active users', err);
     }
@@ -34,6 +35,18 @@ export default function LoginScreen({ onLogin }) {
       setError('Не удалось войти. Попробуйте другое имя.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm(`Завершить сессию пользователя ${user.username}?`)) return;
+
+    try {
+      await deleteUser(user.id);
+      fetchActiveUsers();
+    } catch (err) {
+      console.error('Failed to delete user', err);
+      alert('Не удалось завершить сессию');
     }
   };
 
@@ -69,16 +82,33 @@ export default function LoginScreen({ onLogin }) {
 
       {activeUsers.length > 0 && (
         <div className="max-w-sm w-full">
-          <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-4 px-2">
-            Пользователи
+          <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-4 px-2 flex items-center justify-between">
+            <span>Активные сессии</span>
+            <button
+              onClick={fetchActiveUsers}
+              className="text-purple-400 hover:text-purple-300 text-xs underline"
+            >
+              Обновить
+            </button>
           </h3>
           <div className="space-y-2">
             {activeUsers.map(u => (
-              <div key={u.id} className="flex items-center space-x-3 bg-gray-800/50 border border-gray-700 p-4 rounded-2xl">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                  {u.username[0].toUpperCase()}
+              <div key={u.id} className="group flex items-center justify-between bg-gray-800/50 border border-gray-700 p-4 rounded-2xl hover:bg-gray-800 transition-all">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                    {u.username[0].toUpperCase()}
+                  </div>
+                  <span className="text-gray-200 font-medium">{u.username}</span>
                 </div>
-                <span className="text-gray-200 font-medium">{u.username}</span>
+                <button
+                  onClick={() => handleDeleteUser(u)}
+                  className="p-2 text-gray-500 hover:text-red-500 transition-colors transform group-hover:scale-110"
+                  title="Завершить сессию"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
               </div>
             ))}
           </div>

@@ -29,3 +29,6 @@ Thumbs.db
 *.pid
 *.seed
 *.pid.lock
+
+# Documentation
+QWEN.md
