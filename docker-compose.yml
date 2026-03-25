@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: movie_matcher_db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: YOUR_DB_PASSWORD
+      POSTGRES_DB: movie_matcher
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+
+  backend:
+    build: ./backend
+    container_name: movie_matcher_api
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://user:YOUR_DB_PASSWORD@db:5432/movie_matcher
+      TMDB_API_KEY: "YOUR_TMDB_API_KEY"
+      TMDB_BEARER_TOKEN: "YOUR_TMDB_BEARER_TOKEN"
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: movie_matcher_ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
