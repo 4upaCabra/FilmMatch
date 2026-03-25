@@ -33,18 +33,6 @@ export const swipeMovie = async (userId, movieId, isLiked) => {
   return response.data;
 };
 
-export const uploadKpJson = async (userId, files) => {
-  const formData = new FormData();
-  formData.append('user_id', userId);
-  for (const file of files) {
-    formData.append('files', file);
-  }
-  const response = await api.post('/upload-kp-json', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-  return response.data;
-};
-
 export const clearUserSwipes = async (userId) => {
   const response = await api.delete(`/users/${userId}/swipes`);
   return response.data;

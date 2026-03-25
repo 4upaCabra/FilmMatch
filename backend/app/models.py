@@ -17,7 +17,6 @@ class Movie(Base):
     __tablename__ = "movies"
 
     id = Column(Integer, primary_key=True, index=True)
-    kp_id = Column(Integer, unique=True, index=True, nullable=True)
     title = Column(String, nullable=False)
     year = Column(Integer, nullable=True)
     genres = Column(ARRAY(String), nullable=True)

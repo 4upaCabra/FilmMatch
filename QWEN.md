@@ -52,7 +52,6 @@ TinderFilm/
 │   │   │   └── client.js    # API клиент (axios)
 │   │   └── components/
 │   │       ├── LoginScreen.jsx      # Экран входа
-│   │       ├── UploadCsvScreen.jsx  # Загрузка истории Кинопоиска
 │   │       ├── SwipeScreen.jsx      # Экран свайпов
 │   │       └── MovieCard.jsx        # Карточка фильма
 │   ├── Dockerfile
@@ -73,9 +72,9 @@ TinderFilm/
 - `id`, `username`
 
 **movies** — каталог фильмов
-- `id`, `kp_id`, `title`, `year`, `genres[]`, `tags[]`, `rating`, `poster_url`, `description`
+- `id`, `title`, `year`, `genres[]`, `tags[]`, `rating`, `poster_url`, `description`
 
-**watch_history** — история просмотров (из Кинопоиска)
+**watch_history** — история просмотров
 - `id`, `user_id`, `movie_id`, `user_rating`, `watched_at`
 
 **swipes** — свайпы пользователей
@@ -147,17 +146,6 @@ TMDB_BEARER_TOKEN=YOUR_TMDB_BEARER_TOKEN
 |-------|----------|----------|
 | `POST` | `/swipe` | Создать свайп (возвращает `is_match`) |
 
-### Импорт данных
-
-| Метод | Эндпоинт | Описание |
-|-------|----------|----------|
-| `POST` | `/upload-kp-json` | Загрузить JSON экспорт Кинопоиска |
-
-**Поддерживаемые файлы Кинопоиска:**
-- `vote_*.json` — история просмотров с оценками
-- `folder_*.json` — закладки ("Любимые фильмы")
-- `view_log_*.json` — лог просмотров
-
 ---
 
 ## Миграции базы данных
@@ -197,12 +185,6 @@ cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
-
-### Тестирование импорта из Кинопоиска
-
-1. Экспортируйте данные из Кинопоиска
-2. Войдите в приложение под пользователем
-3. Загрузите файлы `vote_*.json`, `folder_*.json`
 
 ---
 

@@ -53,7 +53,6 @@ TMDB_BEARER_TOKEN=eyJhbGciOiJIUzI1NiJ9...
 | `GET` | `/movies/next` | Следующий фильм для свайпа |
 | `POST` | `/swipe` | Свайп (возвращает `is_match`) |
 | `POST` | `/movies/discover` | Загрузить фильмы из TMDB |
-| `POST` | `/upload-kp-json` | Импорт из Кинопоиска |
 
 ## 🧹 Полезные команды
 
@@ -77,4 +76,3 @@ docker-compose logs -f frontend
 - **Матчинг** — уведомление при взаимном лайке
 - **Фильтры** — по году, жанрам, просмотренным
 - **Ленивая загрузка** — автоподгрузка фильмов из TMDB при нехватке
-- **Импорт Кинопоиска** — `vote_*.json`, `folder_*.json`
