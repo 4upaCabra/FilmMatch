@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { loginUser, getActiveUsers, deleteUser } from '../api/client';
 
-export default function LoginScreen({ onLogin, onSessionChange }) {
+export default function LoginScreen({ onLogin }) {
+  const inputRef = useRef(null);
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -11,7 +12,6 @@ export default function LoginScreen({ onLogin, onSessionChange }) {
     try {
       const users = await getActiveUsers();
       setActiveUsers(users);
-      if (onSessionChange) onSessionChange();
     } catch (err) {
       console.error('Failed to fetch active users', err);
     }
@@ -19,18 +19,23 @@ export default function LoginScreen({ onLogin, onSessionChange }) {
 
   useEffect(() => {
     fetchActiveUsers();
+    // Фокус на поле ввода при загрузке
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username.trim()) return;
+    const value = inputRef.current?.value || username;
+    if (!value.trim()) return;
 
     setLoading(true);
     setError('');
     try {
-      const tokenData = await loginUser(username.trim());
+      const tokenData = await loginUser(value.trim());
       localStorage.setItem('token', tokenData.access_token);
-      onLogin({ username: username.trim(), id: tokenData.user_id });
+      onLogin({ username: value.trim(), id: tokenData.user_id });
     } catch (err) {
       setError('Не удалось войти. Попробуйте другое имя.');
     } finally {
@@ -60,12 +65,16 @@ export default function LoginScreen({ onLogin, onSessionChange }) {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <input
+            ref={inputRef}
             type="text"
             placeholder="Ваше имя"
-            value={username}
+            defaultValue={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full bg-gray-900 border border-gray-700 rounded-2xl py-4 px-6 text-white text-lg focus:outline-none focus:border-purple-500 transition-colors"
             required
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
           />
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -84,12 +93,6 @@ export default function LoginScreen({ onLogin, onSessionChange }) {
         <div className="max-w-sm w-full">
           <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-4 px-2 flex items-center justify-between">
             <span>Активные сессии</span>
-            <button
-              onClick={fetchActiveUsers}
-              className="text-purple-400 hover:text-purple-300 text-xs underline"
-            >
-              Обновить
-            </button>
           </h3>
           <div className="space-y-2">
             {activeUsers.map(u => (
