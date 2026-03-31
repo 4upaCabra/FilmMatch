@@ -1,11 +1,27 @@
-# FilmMatch — Совместный выбор фильмов в стиле Tinder
+# 🎬 FilmMatch
+
+<div align="center">
+
+**Совместный выбор фильмов в стиле Tinder**
 
 Веб-приложение для парного выбора фильмов: свайпайте фильмы, получайте матчи и смотрите вместе.
 
-<div align="center">
-  <img src="screen/filmach1.webp" width="45%" />
-  <img src="screen/filmach2.webp" width="45%" />
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-✓-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+
 </div>
+
+---
+
+<div align="center">
+  <img src="screen/filmach1.webp" width="45%" alt="FilmMatch интерфейс 1" />
+  <img src="screen/filmach2.webp" width="45%" alt="FilmMatch интерфейс 2" />
+</div>
+
+---
 
 ## 🚀 Быстрый старт
 
@@ -20,21 +36,22 @@ docker-compose down
 docker-compose down -v
 ```
 
-**Доступ:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8001
-- API Docs: http://localhost:8001/docs
+> **💡 Доступ к приложению:**
+> - 🌐 **Frontend:** http://localhost:3000
+> - 🔌 **Backend API:** http://localhost:8001
+> - 📚 **API Docs:** http://localhost:8001/docs
 
 ## 🛠 Стек
 
 | Компонент | Технологии |
-|-----------|-----------|
-| Frontend | React 18, Vite, TailwindCSS |
-| Backend | Python 3.11, FastAPI, SQLAlchemy, JWT |
-| БД | PostgreSQL 15 |
-| API | TMDB (постеры, описания) |
+|:----------|:-----------|
+| **Frontend** | React 18, Vite, TailwindCSS |
+| **Backend** | Python 3.11, FastAPI, SQLAlchemy, JWT |
+| **База данных** | PostgreSQL 15 |
+| **API** | TMDB (постеры, описания) |
+| **Контейнеризация** | Docker, Docker Compose |
 
-## 📦 Структура
+## 📦 Структура проекта
 
 ```
 FilmMatch/
@@ -55,6 +72,9 @@ FilmMatch/
 cp .env.example .env
 ```
 
+<details>
+<summary><b>📋 Пример .env файла (нажмите для просмотра)</b></summary>
+
 ```env
 # Database
 POSTGRES_USER=user
@@ -74,10 +94,12 @@ JWT_SECRET=your-secret-key-change-in-production
 FRONTEND_URL=http://localhost:3000
 ```
 
+</details>
+
 ## 📡 API Endpoints
 
 | Метод | Эндпоинт | Описание |
-|-------|----------|----------|
+|:-----:|:---------|:---------|
 | `POST` | `/register` | Создать пользователя |
 | `POST` | `/login` | Получить JWT токен |
 | `GET` | `/movies/next` | Следующий фильм для свайпа |
@@ -88,6 +110,18 @@ FRONTEND_URL=http://localhost:3000
 | `DELETE` | `/users/me/swipes` | Очистить свайпы текущего пользователя |
 
 ## 🧹 Полезные команды
+
+| Команда | Описание |
+|---------|----------|
+| `./start.sh` | Запуск приложения |
+| `docker-compose down -v && ./start.sh` | Пересоздать БД и запустить |
+| `curl -X POST http://localhost:8001/movies/discover` | Добавить фильмы вручную |
+| `docker-compose logs -f backend` | Логи backend |
+| `docker-compose logs -f frontend` | Логи frontend |
+| `curl http://localhost:8001/users/active` | Проверка API |
+
+<details>
+<summary><b>📝 Подробные команды</b></summary>
 
 ```bash
 # Запуск (через скрипт)
@@ -107,18 +141,32 @@ docker-compose logs -f frontend
 curl http://localhost:8001/users/active
 ```
 
-## 📝 Особенности
+</details>
 
-- **JWT аутентификация** — токен хранится в localStorage
-- **Матчинг** — уведомление при взаимном лайке
-- **Фильтры** — по году, жанрам, просмотренным
-- **Ленивая загрузка** — автоподгрузка фильмов из TMDB при нехватке
-- **Управление сессиями** — список активных пользователей с возможностью завершения
+## ✨ Особенности
 
-## 🔐 Безопасность
+| Функция | Описание |
+|---------|----------|
+| 🔐 **JWT аутентификация** | Токен хранится в localStorage |
+| 💕 **Матчинг** | Уведомление при взаимном лайке |
+| 🎭 **Фильтры** | По году, жанрам, просмотренным |
+| ⚡ **Ленивая загрузка** | Автоподгрузка фильмов из TMDB при нехватке |
+| 👥 **Управление сессиями** | Список активных пользователей с возможностью завершения |
+
+## 🔒 Безопасность
 
 - ✅ Секреты вынесены в `.env` (не в репозитории)
 - ✅ JWT токены для аутентификации
 - ✅ CORS ограничен до `FRONTEND_URL`
 - ✅ SSL проверка для TMDB API
 - ✅ Пароль БД без спецсимволов (для совместимости)
+
+---
+
+<div align="center">
+
+**Made with ❤️ for movie lovers**
+
+[Начать использование](#-быстрый-старт) • [Документация API](http://localhost:8001/docs) • [TMDB API](https://www.themoviedb.org/documentation/api)
+
+</div>
