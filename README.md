@@ -2,8 +2,10 @@
 
 Веб-приложение для парного выбора фильмов: свайпайте фильмы, получайте матчи и смотрите вместе.
 
-![Скриншот 1](screen/filmach1.webp)
-![Скриншот 2](screen/filmach2.webp)
+<div align="center">
+  <img src="screen/filmach1.webp" width="45%" />
+  <img src="screen/filmach2.webp" width="45%" />
+</div>
 
 ## 🚀 Быстрый старт
 
