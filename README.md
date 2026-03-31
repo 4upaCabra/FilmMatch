@@ -120,29 +120,6 @@ FRONTEND_URL=http://localhost:3000
 | `docker-compose logs -f frontend` | Логи frontend |
 | `curl http://localhost:8001/users/active` | Проверка API |
 
-<details>
-<summary><b>📝 Подробные команды</b></summary>
-
-```bash
-# Запуск (через скрипт)
-./start.sh
-
-# Пересоздать БД
-docker-compose down -v && ./start.sh
-
-# Добавить фильмы вручную
-curl -X POST http://localhost:8001/movies/discover
-
-# Логи
-docker-compose logs -f backend
-docker-compose logs -f frontend
-
-# Проверка API
-curl http://localhost:8001/users/active
-```
-
-</details>
-
 ## ✨ Особенности
 
 | Функция | Описание |
