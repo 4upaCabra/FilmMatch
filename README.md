@@ -17,8 +17,8 @@
 ---
 
 <div align="center">
-  <img src="screen/filmach1.webp" width="45%" alt="FilmMatch интерфейс 1" />
-  <img src="screen/filmach2.webp" width="45%" alt="FilmMatch интерфейс 2" />
+  <img src="screen/filmach1.webp" height="400" alt="FilmMatch интерфейс 1" />
+  <img src="screen/filmach2.webp" height="400" alt="FilmMatch интерфейс 2" />
 </div>
 
 ---
