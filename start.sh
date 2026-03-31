@@ -1,5 +1,5 @@
 #!/bin/bash
-# Скрипт запуска TinderFilm
+# Скрипт запуска FilmMatch
 # Очищает переменные окружения и запускает с .env файлом
 
 set -a  # Автоматически экспортировать все переменные
@@ -10,7 +10,7 @@ set +a  # Выключить автоматический экспорт
 docker-compose up -d --build
 
 echo ""
-echo "✅ TinderFilm запущен!"
+echo "✅ FilmMatch запущен!"
 echo "Frontend: http://localhost:3000"
 echo "Backend:  http://localhost:8001"
 echo "API Docs: http://localhost:8001/docs"

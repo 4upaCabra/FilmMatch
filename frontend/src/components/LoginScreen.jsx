@@ -61,7 +61,7 @@ export default function LoginScreen({ onLogin }) {
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center px-4 py-10">
       <div className="bg-gray-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full border border-gray-700 text-center mb-8">
         <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-2">
-          TinderFilm
+          FilmMatch
         </h1>
         <p className="text-gray-400 mb-8 font-medium">Кто сегодня выбирает кино?</p>
 

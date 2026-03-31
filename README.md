@@ -1,4 +1,4 @@
-# TinderFilm — Совместный выбор фильмов в стиле Tinder
+# FilmMatch — Совместный выбор фильмов в стиле Tinder
 
 Веб-приложение для парного выбора фильмов: свайпайте фильмы, получайте матчи и смотрите вместе.
 
@@ -32,7 +32,7 @@ docker-compose down -v
 ## 📦 Структура
 
 ```
-TinderFilm/
+FilmMatch/
 ├── backend/app/       # FastAPI API
 ├── frontend/src/      # React компоненты
 ├── database/init/     # SQL миграции
