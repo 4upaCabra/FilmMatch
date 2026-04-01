@@ -17,8 +17,8 @@
 ---
 
 <div align="center">
-  <img src="screen/filmach1.webp" height="550" alt="FilmMatch интерфейс 1" />
-  <img src="screen/filmach2.webp" height="550" alt="FilmMatch интерфейс 2" />
+  <img src="screen/filmach1.webp" height="600" alt="FilmMatch интерфейс 1" />
+  <img src="screen/filmach2.webp" height="600" alt="FilmMatch интерфейс 2" />
 </div>
 
 ---
@@ -142,8 +142,7 @@ FRONTEND_URL=http://localhost:3000
 
 <div align="center">
 
-**Made with ❤️ for movie lovers**
 
-[Начать использование](#-быстрый-старт) • [Документация API](http://localhost:8001/docs) • [TMDB API](https://www.themoviedb.org/documentation/api)
+[Начать использование](#-быстрый-старт) • [TMDB API](https://www.themoviedb.org/documentation/api)
 
 </div>
