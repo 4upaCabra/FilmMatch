@@ -7,6 +7,8 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 
+_genre_cache = None
+
 
 async def _fetch_from_tmdb(endpoint: str, params: dict) -> list:
     headers = {}
@@ -36,7 +38,6 @@ async def fetch_poster_url(title: str, year: Optional[int] = None) -> Optional[s
     data = await _fetch_from_tmdb("/search/movie", params)
     results = data.get("results", [])
 
-    # Fallback: try without year if no results
     if not results and year:
         params.pop("primary_release_year", None)
         data = await _fetch_from_tmdb("/search/movie", params)
@@ -50,43 +51,41 @@ async def fetch_poster_url(title: str, year: Optional[int] = None) -> Optional[s
 
 
 async def fetch_top_rated_movies(page: int = 1) -> list:
-    """Fetch top rated movies from TMDB."""
     params = {"language": "ru-RU", "page": page}
     data = await _fetch_from_tmdb("/movie/top_rated", params)
     return data.get("results", [])
 
 
 async def fetch_now_playing_movies(page: int = 1) -> list:
-    """Fetch currently playing/new movies from TMDB."""
     params = {"language": "ru-RU", "page": page}
     data = await _fetch_from_tmdb("/movie/now_playing", params)
     return data.get("results", [])
 
 
 async def fetch_popular_movies(page: int = 1) -> list:
-    """Fetch popular movies from TMDB."""
     params = {"language": "ru-RU", "page": page}
     data = await _fetch_from_tmdb("/movie/popular", params)
     return data.get("results", [])
 
 
 async def fetch_upcoming_movies(page: int = 1) -> list:
-    """Fetch upcoming movies from TMDB."""
     params = {"language": "ru-RU", "page": page}
     data = await _fetch_from_tmdb("/movie/upcoming", params)
     return data.get("results", [])
 
 
 async def fetch_trending_movies(page: int = 1) -> list:
-    """Fetch trending movies from TMDB (daily)."""
     params = {"language": "ru-RU"}
     data = await _fetch_from_tmdb("/trending/movie/day", params)
     return data.get("results", [])
 
 
 async def fetch_genres() -> dict:
-    """Fetch genre mapping from TMDB."""
+    global _genre_cache
+    if _genre_cache is not None:
+        return _genre_cache
     params = {"language": "ru-RU"}
     data = await _fetch_from_tmdb("/genre/movie/list", params)
     genres = data.get("genres", [])
-    return {g["id"]: g["name"] for g in genres}
+    _genre_cache = {g["id"]: g["name"] for g in genres}
+    return _genre_cache

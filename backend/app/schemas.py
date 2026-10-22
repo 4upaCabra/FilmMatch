@@ -1,12 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
+
 class UserBase(BaseModel):
-    username: str
+    username: str = Field(min_length=1, max_length=10)
+
 
 class UserCreate(UserBase):
     pass
+
 
 class UserResponse(UserBase):
     id: int
@@ -15,8 +18,10 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+
 class UserLogin(BaseModel):
-    username: str
+    username: str = Field(min_length=1, max_length=10)
+
 
 class MovieBase(BaseModel):
     title: str
@@ -27,8 +32,10 @@ class MovieBase(BaseModel):
     poster_url: Optional[str] = None
     description: Optional[str] = None
 
+
 class MovieCreate(MovieBase):
     pass
+
 
 class MovieResponse(MovieBase):
     id: int
@@ -36,9 +43,11 @@ class MovieResponse(MovieBase):
     class Config:
         from_attributes = True
 
+
 class SwipeCreate(BaseModel):
     movie_id: int
     is_liked: bool
+
 
 class SwipeResponse(BaseModel):
     id: int

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query, status
+from fastapi import FastAPI, Depends, HTTPException, Query, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -78,9 +78,17 @@ async def get_next_movie(
     return movie
 
 
+_discover_calls = []
+
 @app.post("/movies/discover")
-async def discover_movies(page: int = None, db: Session = Depends(get_db)):
+async def discover_movies(request: Request, page: int = None, db: Session = Depends(get_db)):
     """Manually trigger discovery of more movies from TMDB."""
+    global _discover_calls
+    now = time.time()
+    _discover_calls = [t for t in _discover_calls if now - t < 60]
+    if len(_discover_calls) >= 5:
+        raise HTTPException(status_code=429, detail="Too many discover requests. Max 5 per minute.")
+    _discover_calls.append(now)
     import random
     if page is None:
         page = random.randint(1, 5)
