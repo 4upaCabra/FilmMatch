@@ -11,7 +11,6 @@ export default function LoginScreen({ onLogin }) {
   const fetchActiveUsers = async () => {
     try {
       const users = await getActiveUsers();
-      console.log('Active users loaded:', users);
       setActiveUsers(users);
     } catch (err) {
       console.error('Failed to fetch active users', err);
@@ -19,9 +18,7 @@ export default function LoginScreen({ onLogin }) {
   };
 
   useEffect(() => {
-    console.log('LoginScreen mounted, fetching active users');
     fetchActiveUsers();
-    // Фокус на поле ввода при загрузке
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -29,17 +26,17 @@ export default function LoginScreen({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const value = inputRef.current?.value || username;
-    if (!value.trim()) return;
+    const trimmed = username.trim();
+    if (!trimmed) return;
 
     setLoading(true);
     setError('');
     try {
-      const tokenData = await loginUser(value.trim());
+      const tokenData = await loginUser(trimmed);
       localStorage.setItem('token', tokenData.access_token);
-      onLogin({ username: value.trim(), id: tokenData.user_id });
-    } catch (err) {
-      setError('Не удалось войти. Попробуйте другое имя.');
+      onLogin({ username: trimmed, id: tokenData.user_id });
+    } catch {
+      setError('Не удалось войти. Проверьте имя (до 10 символов).');
     } finally {
       setLoading(false);
     }
@@ -70,7 +67,8 @@ export default function LoginScreen({ onLogin }) {
             ref={inputRef}
             type="text"
             placeholder="Ваше имя"
-            defaultValue={username}
+            maxLength={10}
+            value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full bg-gray-900 border border-gray-700 rounded-2xl py-4 px-6 text-white text-lg focus:outline-none focus:border-purple-500 transition-colors"
             required
@@ -97,8 +95,11 @@ export default function LoginScreen({ onLogin }) {
             <span>Активные сессии</span>
           </h3>
           <div className="space-y-2">
-            {activeUsers.map(u => (
-              <div key={u.id} className="group flex items-center justify-between bg-gray-800/50 border border-gray-700 p-4 rounded-2xl hover:bg-gray-800 transition-all">
+            {activeUsers.map((u) => (
+              <div
+                key={u.id}
+                className="group flex items-center justify-between bg-gray-800/50 border border-gray-700 p-4 rounded-2xl hover:bg-gray-800 transition-all"
+              >
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
                     {u.username[0].toUpperCase()}

@@ -1,42 +1,38 @@
-from sqlalchemy.orm import Session
-from sqlalchemy.sql.expression import func
-from . import models, schemas, tmdb
-import pandas as pd
-from datetime import datetime
-from typing import Optional
 import asyncio
+from datetime import datetime, timezone
+from typing import List, Optional, Union
 
-def get_user(db: Session, user_id: int):
+from sqlalchemy import or_
+from sqlalchemy.orm import Session
+
+from . import models, tmdb
+
+_background_discover_running = False
+
+
+def get_user(db: Session, user_id: int) -> Optional[models.User]:
     return db.query(models.User).filter(models.User.id == user_id).first()
 
-def get_or_create_user(db: Session, username: str):
+
+def get_or_create_user(db: Session, username: str) -> models.User:
     db_user = db.query(models.User).filter(models.User.username == username).first()
     if not db_user:
         db_user = models.User(username=username)
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-    
-    # Check if user has uploaded watch history
-    has_history = db.query(models.WatchHistory).filter(models.WatchHistory.user_id == db_user.id).first() is not None
-    
-    # Return a dict that matches UserResponse schema
-    return {
-        "id": db_user.id,
-        "username": db_user.username,
-        "has_history": has_history
-    }
+    return db_user
 
-def create_swipe(db: Session, swipe_data: dict):
-    # Check if this user already swiped this movie
+
+def create_swipe(db: Session, swipe_data: dict) -> dict:
     db_swipe = db.query(models.Swipe).filter(
         models.Swipe.user_id == swipe_data["user_id"],
-        models.Swipe.movie_id == swipe_data["movie_id"]
+        models.Swipe.movie_id == swipe_data["movie_id"],
     ).first()
 
     if db_swipe:
         db_swipe.is_liked = swipe_data["is_liked"]
-        db_swipe.created_at = datetime.utcnow()
+        db_swipe.created_at = datetime.now(timezone.utc)
     else:
         db_swipe = models.Swipe(**swipe_data)
         db.add(db_swipe)
@@ -44,22 +40,19 @@ def create_swipe(db: Session, swipe_data: dict):
     db.commit()
     db.refresh(db_swipe)
 
-    # Check for match IF user liked the movie
     is_match = False
     movie = None
     if db_swipe.is_liked:
-        # Search for OTHER users who liked the SAME movie
         other_like = db.query(models.Swipe).filter(
             models.Swipe.movie_id == db_swipe.movie_id,
             models.Swipe.user_id != db_swipe.user_id,
-            models.Swipe.is_liked == True
+            models.Swipe.is_liked.is_(True),
         ).first()
 
         if other_like:
             is_match = True
             movie = db.query(models.Movie).filter(models.Movie.id == db_swipe.movie_id).first()
 
-    # Return dict with match info
     return {
         "id": db_swipe.id,
         "user_id": db_swipe.user_id,
@@ -67,109 +60,145 @@ def create_swipe(db: Session, swipe_data: dict):
         "is_liked": db_swipe.is_liked,
         "created_at": db_swipe.created_at,
         "is_match": is_match,
-        "movie": movie
+        "movie": movie,
     }
 
-async def populate_discover_movies(db: Session, page: int = 1):
-    """Fetch movies from multiple TMDB sources and add to DB."""
-    # Fetch genre mapping
-    genre_map = await tmdb.fetch_genres()
 
-    # Fetch from sources with released movies only (no upcoming)
-    top_rated = await tmdb.fetch_top_rated_movies(page=page)
-    now_playing = await tmdb.fetch_now_playing_movies(page=page)
-    popular = await tmdb.fetch_popular_movies(page=page)
-    trending = await tmdb.fetch_trending_movies(page=page)
+async def populate_discover_movies(db: Session, page: int = 1) -> int:
+    """Fetch movies from multiple TMDB sources concurrently and add new ones to DB."""
+    genre_map, top_rated, now_playing, popular, trending = await asyncio.gather(
+        tmdb.fetch_genres(),
+        tmdb.fetch_top_rated_movies(page=page),
+        tmdb.fetch_now_playing_movies(page=page),
+        tmdb.fetch_popular_movies(page=page),
+        tmdb.fetch_trending_movies(page=page),
+    )
 
-    # Combine all results (may have duplicates, handled below)
     all_results = top_rated + now_playing + popular + trending
-    added_count = 0
+    if not all_results:
+        return 0
+
+    # Дедупликация внутри пачки по TMDB ID (или названию)
+    unique_items: list[dict] = []
+    seen_tmdb_ids: set[int] = set()
+    seen_titles: set[tuple[str, Optional[int]]] = set()
 
     for item in all_results:
-        title = item.get("title")
+        title = (item.get("title") or "").strip()
         if not title:
             continue
 
-        # Extract year from release_date "YYYY-MM-DD"
-        release_date = item.get("release_date", "")
-        year = None
-        if release_date and len(release_date) >= 4:
-            try:
-                year = int(release_date[:4])
-            except ValueError:
-                pass
+        release_date = item.get("release_date") or ""
+        year: Optional[int] = None
+        if len(release_date) >= 4 and release_date[:4].isdigit():
+            year = int(release_date[:4])
 
-        # Get genre names from IDs
+        tmdb_id = item.get("id")
+        if tmdb_id is not None:
+            if tmdb_id in seen_tmdb_ids:
+                continue
+            seen_tmdb_ids.add(tmdb_id)
+        else:
+            key = (title, year)
+            if key in seen_titles:
+                continue
+            seen_titles.add(key)
+
+        item["_parsed_title"] = title
+        item["_parsed_year"] = year
+        unique_items.append(item)
+
+    if not unique_items:
+        return 0
+
+    # Загружаем уже существующие фильмы одним запросом вместо N+1
+    existing_by_tmdb_id: dict[int, models.Movie] = {}
+    if seen_tmdb_ids:
+        for m in db.query(models.Movie).filter(models.Movie.tmdb_id.in_(seen_tmdb_ids)).all():
+            if m.tmdb_id is not None:
+                existing_by_tmdb_id[m.tmdb_id] = m
+
+    titles_to_check = {item["_parsed_title"] for item in unique_items}
+    existing_by_title_year: dict[tuple[str, Optional[int]], models.Movie] = {}
+    for m in db.query(models.Movie).filter(models.Movie.title.in_(titles_to_check)).all():
+        existing_by_title_year[(m.title, m.year)] = m
+
+    added_count = 0
+    dirty = False
+
+    for item in unique_items:
+        title = item["_parsed_title"]
+        year = item["_parsed_year"]
+        tmdb_id = item.get("id")
         genre_ids = item.get("genre_ids", [])
-        genre_names = [genre_map.get(gid).lower() for gid in genre_ids if genre_map.get(gid)]
+        genre_names = [genre_map[gid].lower() for gid in genre_ids if gid in genre_map]
 
-        # Check if exists
-        exists = db.query(models.Movie).filter(models.Movie.title == title).first()
+        exists = (
+            existing_by_tmdb_id.get(tmdb_id)
+            if tmdb_id is not None
+            else None
+        ) or existing_by_title_year.get((title, year))
+
         if not exists:
             poster_path = item.get("poster_path")
             poster_url = f"{tmdb.TMDB_IMAGE_BASE_URL}{poster_path}" if poster_path else None
 
             movie = models.Movie(
+                tmdb_id=tmdb_id,
                 title=title,
                 year=year,
                 genres=genre_names,
                 poster_url=poster_url,
                 rating=item.get("vote_average"),
-                description=item.get("overview")
+                description=item.get("overview"),
             )
             db.add(movie)
             added_count += 1
-        elif not exists.genres and genre_names:
-            # Update existing movie if genres were missing
-            exists.genres = genre_names
+            dirty = True
+        else:
+            if exists.tmdb_id is None and tmdb_id is not None:
+                exists.tmdb_id = tmdb_id
+                dirty = True
+            if not exists.genres and genre_names:
+                exists.genres = genre_names
+                dirty = True
 
-    if added_count > 0:
+    if dirty:
         db.commit()
     return added_count
 
 
-async def get_next_movie(db: Session, user_id: int, exclude_watched: bool = False, min_year: Optional[int] = None, genre: Optional[str] = None) -> Optional[models.Movie]:
+async def get_next_movie(
+    db: Session,
+    user_id: int,
+    min_year: Optional[int] = None,
+    genre: Optional[Union[str, List[str]]] = None,
+) -> Optional[models.Movie]:
+    global _background_discover_running
+
     query = db.query(models.Movie)
 
-    # Исключаем фильмы которые пользователь уже свайпнул
     swiped_subquery = db.query(models.Swipe.movie_id).filter(models.Swipe.user_id == user_id)
     query = query.filter(~models.Movie.id.in_(swiped_subquery))
-
-    # Дополнительно исключаем просмотренные, если включена опция
-    if exclude_watched:
-        watched_subquery = db.query(models.WatchHistory.movie_id).filter(models.WatchHistory.user_id == user_id)
-        query = query.filter(~models.Movie.id.in_(watched_subquery))
 
     if min_year:
         query = query.filter(models.Movie.year >= min_year)
 
     if genre:
-        # Support both single string and list of genres
-        from sqlalchemy import or_
-        if isinstance(genre, str):
-            genres_list = [genre]
-        else:
-            genres_list = genre
-
+        genres_list = [genre] if isinstance(genre, str) else list(genre)
+        genres_list = [g.lower() for g in genres_list if g]
         if genres_list:
-            # Lowercase for case-insensitive matching
-            genres_list = [g.lower() for g in genres_list]
             genre_filters = [models.Movie.genres.any(g) for g in genres_list]
             query = query.filter(or_(*genre_filters))
 
-    # Получаем текущий фильм - последовательно по ID (не случайно!)
-    # Это нужно для корректной работы матчей - все пользователи видят одни фильмы
     movie = query.order_by(models.Movie.id).first()
 
-    # Предзагрузка: если фильмов в пуле мало (< 20), запускаем загрузку новых
-    # но не блокируем возврат текущего фильма
+    # Предзагрузка в фоне без параллельного шторма запросов к TMDB
     count = query.count()
-    if count < 20:
-        # Загружаем 10 страниц асинхронно (не блокируя ответ) ~500 фильмов
+    if count < 20 and not _background_discover_running:
         from .database import SessionLocal
-        asyncio.create_task(populate_discover_batch(pages=10, db_session=SessionLocal))
+        asyncio.create_task(populate_discover_batch(pages=5, db_session=SessionLocal))
 
-    # Lazily fetch poster if it's missing (though populate_discover_movies should have it)
     if movie and not movie.poster_url:
         poster_url = await tmdb.fetch_poster_url(movie.title, movie.year)
         if poster_url:
@@ -180,34 +209,39 @@ async def get_next_movie(db: Session, user_id: int, exclude_watched: bool = Fals
     return movie
 
 
-async def populate_discover_batch(pages: int = 5, db_session=None):
+async def populate_discover_batch(pages: int = 5, start_page: int = 1, db_session=None) -> int:
     """Загрузить несколько страниц фильмов из TMDB в фоне."""
+    global _background_discover_running
+    if _background_discover_running:
+        return 0
+
+    _background_discover_running = True
     db = db_session()
+    total_added = 0
     try:
-        for page in range(1, pages + 1):
-            await populate_discover_movies(db, page=page)
-        db.commit()
+        for page in range(start_page, start_page + pages):
+            total_added += await populate_discover_movies(db, page=page)
+        return total_added
     except Exception as e:
         print(f"[CRUD] Error in background discover batch: {e}")
         db.rollback()
+        return total_added
     finally:
         db.close()
+        _background_discover_running = False
 
-def clear_user_swipes(db: Session, user_id: int):
+
+def clear_user_swipes(db: Session, user_id: int) -> None:
     db.query(models.Swipe).filter(models.Swipe.user_id == user_id).delete()
     db.commit()
 
-def get_active_users(db: Session):
-    # Возвращаем всех пользователей (активные сессии)
-    return db.query(models.User).all()
+
+def get_active_users(db: Session) -> List[models.User]:
+    return db.query(models.User).order_by(models.User.id).all()
 
 
-def delete_user(db: Session, user_id: int):
-    """Удалить пользователя и все его данные (свайпы, историю)."""
-    # Удаляем свайпы
+def delete_user(db: Session, user_id: int) -> None:
+    """Удалить пользователя и все его свайпы."""
     db.query(models.Swipe).filter(models.Swipe.user_id == user_id).delete()
-    # Удаляем историю просмотров
-    db.query(models.WatchHistory).filter(models.WatchHistory.user_id == user_id).delete()
-    # Удаляем пользователя
     db.query(models.User).filter(models.User.id == user_id).delete()
     db.commit()

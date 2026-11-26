@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserBase(BaseModel):
@@ -13,10 +13,8 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
-    has_history: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserLogin(BaseModel):
@@ -24,6 +22,7 @@ class UserLogin(BaseModel):
 
 
 class MovieBase(BaseModel):
+    tmdb_id: Optional[int] = None
     title: str
     year: Optional[int] = None
     genres: Optional[List[str]] = None
@@ -40,8 +39,7 @@ class MovieCreate(MovieBase):
 class MovieResponse(MovieBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SwipeCreate(BaseModel):
@@ -58,5 +56,4 @@ class SwipeResponse(BaseModel):
     is_match: bool = False
     movie: Optional[MovieResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -11,7 +11,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-movie_matcher}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 
@@ -25,11 +29,12 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       TMDB_API_KEY: ${TMDB_API_KEY}
       TMDB_BEARER_TOKEN: ${TMDB_BEARER_TOKEN}
-      TMDB_PROXY_URL: ${TMDB_PROXY_URL}
+      TMDB_PROXY_URL: ${TMDB_PROXY_URL:-}
       JWT_SECRET: ${JWT_SECRET}
-      FRONTEND_URL: ${FRONTEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./backend:/app
     dns:
@@ -45,6 +50,7 @@ services:
   frontend:
     build: ./frontend
     container_name: movie_matcher_ui
+    restart: always
     ports:
       - "3000:80"
     depends_on:

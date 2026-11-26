@@ -55,9 +55,8 @@ docker-compose down -v
 
 ```
 FilmMatch/
-├── backend/app/       # FastAPI API
-├── frontend/src/      # React компоненты
-├── database/init/     # SQL миграции
+├── backend/           # FastAPI API и скрипт миграций migrate.py
+├── frontend/          # React + Vite интерфейс и конфигурация Nginx
 ├── docker-compose.yml
 ├── .env               # Переменные окружения (не в git)
 ├── .env.example       # Шаблон переменных
