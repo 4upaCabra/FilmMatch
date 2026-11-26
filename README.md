@@ -137,6 +137,11 @@ FRONTEND_URL=http://localhost:3000
 - ✅ SSL проверка для TMDB API
 - ✅ Пароль БД без спецсимволов (для совместимости)
 
+## 🤝 Контрибьюторы
+
+- **[@4upaCabra](https://github.com/4upaCabra)** — автор идеи и основной разработчик
+- **Antigravity (Google DeepMind)** — аудит кода, исправление ошибок и оптимизация конфигурации
+
 ---
 
 <div align="center">
